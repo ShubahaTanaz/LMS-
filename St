@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Cholo Pori – Student LMS</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    /* ── CSS VARIABLES: define colors once, reuse everywhere ── */
+    :root {
+      --red:    #7d2a2a;   /* brand dark red */
+      --red2:   #a03838;   /* lighter red */
+      --cream:  #fdf6ee;   /* page background */
+      --white:  #fff9f3;   /* card background */
+      --gold:   #c9933a;   /* accent gold */
+      --text:   #3b3535;   /* main text */
+      --gray:   #9c8a8a;   /* small text */
+      --green:  #2e7d52;   /* success color */
+      --blue:   #2d57a8;   /* info color */
+    }
+
+    /* ── RESET: remove browser default spacing ── */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(--text); }
+
+    /* ── LOGIN PAGE: covers full screen, centered card ── */
+    #login-page {
+      display: flex; align-items: center; justify-content: center;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #521c1c, var(--red), var(--red2));
+    }
+    .login-card {
+      background: var(--white); border-radius: 16px; padding: 40px;
+      width: 380px; box-shadow: 0 20px 50px rgba(0,0,0,.3);
+      animation: popUp .4s ease;
+    }
+    @keyframes popUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+
+    .login-card h2 { font-family:'Playfair Display',serif; color:var(--red); text-align:center; margin-bottom:6px; }
+    .login-card p  { color:var(--gray); text-align:center; font-size:.85rem; margin-bottom:24px; }
+
+    /* ── FORM: label above input ── */
+    .field       { margin-bottom:16px; }
+    .field label { display:block; font-size:.78rem; font-weight:600; color:var(--red); margin-bottom:5px; text-transform:uppercase; }
+    .field input {
+      width:100%; padding:10px 14px; border:1.5px solid rgba(125,42,42,.2);
+      border-radius:8px; font-family:'DM Sans',sans-serif; font-size:.9rem;
+      outline:none; background:var(--cream);
+    }
+    .field input:focus { border-color:var(--red); box-shadow:0 0 0 3px rgba(125,42,42,.1); }
+
+    /* ── ERROR MESSAGE: shown on wrong login ── */
+    #login-error { color:#c0392b; font-size:.82rem; text-align:center; margin-bottom:10px; display:none; }
+
+    .btn-main {
+      width:100%; padding:12px; background:linear-gradient(135deg, #521c1c, var(--red2));
+      color:#fff; border:none; border-radius:8px; font-size:.95rem; font-weight:600;
+      cursor:pointer; font-family:'DM Sans',sans-serif;
+    }
+    .btn-main:hover { opacity:.9; }
+
+    /* ── APP: hidden until login, then shown as flex column ── */
+    #app { display:none; min-height:100vh; flex-direction:column; }
+
+    /* ── TOPBAR: sticky bar at the top ── */
+    .topbar {
+      background:linear-gradient(90deg, #521c1c, var(--red));
+      padding:0 24px; height:56px;
+      display:flex; align-items:center; gap:12px;
+      position:sticky; top:0; z-index:100;
+      box-shadow:0 2px 10px rgba(0,0,0,.2);
+    }
+    .topbar h1 { font-family:'Playfair Display',serif; color:#fff; font-size:1.1rem; flex:1; }
+    .topbar span { color:rgba(255,255,255,.75); font-size:.82rem; }
+    .btn-logout {
+      background:rgba(255,255,255,.15); color:#fff; border:1px solid rgba(255,255,255,.3);
+      padding:5px 12px; border-radius:20px; font-size:.78rem; cursor:pointer;
+      font-family:'DM Sans',sans-serif;
+    }
+
+    /* ── TABS: navigation buttons below topbar ── */
+    .tabs { background:var(--white); display:flex; border-bottom:2px solid rgba(125,42,42,.1); padding:0 20px; }
+    .tab  {
+      padding:13px 18px; border:none; background:none; cursor:pointer;
+      font-family:'DM Sans',sans-serif; font-size:.88rem; color:var(--gray);
+      border-bottom:3px solid transparent; margin-bottom:-2px;  /* overlap parent border */
+    }
+    .tab.active { color:var(--red); border-bottom-color:var(--red); font-weight:600; }
+
+    /* ── CONTENT: the area below tabs ── */
+    .content { padding:24px 28px; max-width:960px; margin:0 auto; width:100%; }
+
+    /* ── SECTIONS: only one visible at a time ── */
+    .section { display:none; animation:fadeUp .3s ease; }
+    .section.active { display:block; }
+    @keyframes fadeUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+
+    /* ── PAGE TITLE ── */
+    .page-title { font-family:'Playfair Display',serif; font-size:1.4rem; color:#521c1c; margin-bottom:20px; }
+
+    /* ── CARD: white rounded box ── */
+    .card {
+      background:var(--white); border-radius:12px; padding:20px;
+      box-shadow:0 2px 8px rgba(80,20,20,.1); border:1px solid rgba(125,42,42,.07);
+      margin-bottom:14px;
+    }
+
+    /* ── VIDEO ROW: thumbnail + info + button in one line ── */
+    .video-row { display:flex; align-items:center; gap:14px; }
+    .thumb { width:70px; height:46px; border-radius:8px; display:grid; place-items:center; font-size:1.6rem; flex-shrink:0; }
+    .v-info { flex:1; }
+    .v-info h3 { font-size:.9rem; font-weight:600; }
+    .v-info p  { font-size:.75rem; color:var(--gray); margin-top:2px; }
+
+    /* ── PDF ROW ── */
+    .pdf-row { display:flex; align-items:center; gap:14px; }
+    .pdf-icon { font-size:2rem; flex-shrink:0; }
+
+    /* ── NOTICE CARD: left border shows priority ── */
+    .notice-card { border-left:4px solid transparent; }
+    .notice-card.urgent  { border-left-color:#c0392b; }
+    .notice-card.info    { border-left-color:var(--blue); }
+    .notice-card.general { border-left-color:var(--green); }
+    .notice-card h3 { font-size:.95rem; font-weight:600; margin-bottom:6px; }
+    .notice-card p  { font-size:.85rem; color:var(--text); line-height:1.6; }
+    .notice-meta    { font-size:.75rem; color:var(--gray); margin-top:8px; }
+
+    /* ── TAG PILL ── */
+    .tag { display:inline-block; padding:2px 9px; border-radius:20px; font-size:.72rem; font-weight:700; margin-right:8px; }
+    .tag.urgent  { background:#fdeaea; color:#c0392b; }
+    .tag.info    { background:#eaf0fd; color:var(--blue); }
+    .tag.general { background:#e6f4ec; color:var(--green); }
+
+    /* ── BUTTONS ── */
+    .btn-watch { background:var(--red); color:#fff; border:none; padding:7px 14px; border-radius:20px; font-size:.8rem; cursor:pointer; font-family:'DM Sans',sans-serif; }
+    .btn-dl    { background:#eaf0fd; color:var(--blue); border:none; padding:7px 14px; border-radius:20px; font-size:.8rem; cursor:pointer; font-family:'DM Sans',sans-serif; }
+    .btn-watch:hover { background:#521c1c; }
+    .btn-dl:hover    { background:var(--blue); color:#fff; }
+
+    /* ── MODAL: popup overlay ── */
+    .modal-bg { display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:500; align-items:center; justify-content:center; }
+    .modal-bg.open { display:flex; }
+    .modal-box { background:var(--white); border-radius:14px; padding:26px; width:90%; max-width:420px; box-shadow:0 16px 48px rgba(0,0,0,.3); }
+    .modal-box h3 { font-family:'Playfair Display',serif; color:#521c1c; margin-bottom:6px; }
+    .modal-box p  { color:var(--gray); font-size:.85rem; margin-bottom:16px; }
+    .modal-placeholder { background:#f0e8e0; border-radius:10px; padding:32px; text-align:center; margin-bottom:16px; }
+    .modal-close { float:right; background:none; border:none; font-size:1.2rem; cursor:pointer; color:var(--gray); margin-top:-4px; }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════ LOGIN PAGE ══════════════
+     Student enters ID + password.
+     doLogin() checks against our fake DB below.
+     In real life: send to server → check Student table in MySQL.
+-->
+<div id="login-page">
+  <div class="login-card">
+    <h2>📖 Cholo Pori</h2>
+    <p>Student Portal – LMS</p>
+
+    <div class="field">
+      <label>Student ID</label>
+      <input type="text" id="sid" placeholder="e.g. STU001" value="STU001">
+    </div>
+    <div class="field">
+      <label>Password</label>
+      <input type="password" id="spw" placeholder="password" value="pass123">
+    </div>
+
+    <!-- Error shows only when wrong ID/password is entered -->
+    <div id="login-error">❌ Wrong Student ID or Password.</div>
+
+    <button class="btn-main" onclick="doLogin()">Sign In</button>
+  </div>
+</div>
+
+
+<!-- ══════════════ APP (hidden until login) ══════════════ -->
+<div id="app">
+
+  <!-- TOPBAR: stays fixed at top while scrolling -->
+  <header class="topbar">
+    <h1>📖 Cholo Pori LMS</h1>
+    <span id="student-name"></span>  <!-- filled by JS after login -->
+    <button class="btn-logout" onclick="doLogout()">Logout</button>
+  </header>
+
+  <!-- TABS: one per student feature -->
+  <nav class="tabs">
+    <button class="tab active" onclick="showTab('dashboard', this)">🏠 Dashboard</button>
+    <button class="tab" onclick="showTab('videos',    this)">🎬 Recorded Classes</button>
+    <button class="tab" onclick="showTab('pdfs',      this)">📄 PDFs</button>
+    <button class="tab" onclick="showTab('notices',   this)">📢 Notices</button>
+  </nav>
+
+  <div class="content">
+
+    <!-- ── DASHBOARD ── -->
+    <div class="section active" id="sec-dashboard">
+      <div class="page-title">Welcome back! 👋</div>
+
+      <!-- Quick info cards: pulled from our fake DB in real life these are SQL COUNT() queries -->
+      <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:20px;">
+
+        <div class="card" style="text-align:center;">
+          <div style="font-size:2rem; color:var(--red); font-family:'Playfair Display',serif;" id="d-videos">0</div>
+          <div style="font-size:.8rem; color:var(--gray);">Videos Available</div>
+        </div>
+
+        <div class="card" style="text-align:center;">
+          <div style="font-size:2rem; color:var(--blue); font-family:'Playfair Display',serif;" id="d-pdfs">0</div>
+          <div style="font-size:.8rem; color:var(--gray);">PDF Materials</div>
+        </div>
+
+        <div class="card" style="text-align:center;">
+          <div style="font-size:2rem; color:var(--green); font-family:'Playfair Display',serif;" id="d-notices">0</div>
+          <div style="font-size:.8rem; color:var(--gray);">Notices</div>
+        </div>
+
+      </div>
+
+      <!-- Latest notice preview on dashboard -->
+      <div class="page-title" style="font-size:1rem;">📢 Latest Notice</div>
+      <div class="card notice-card urgent" id="d-latest-notice">
+        <!-- filled by JS using data from our fake backend -->
+      </div>
+    </div>
+
+
+    <!-- ── RECORDED CLASSES (Feature c) ──
+         In real life: SELECT * FROM Video WHERE CourseID IN (enrolled courses)
+    -->
+    <div class="section" id="sec-videos">
+      <div class="page-title">🎬 Recorded Classes</div>
+      <div id="video-list">
+        <!-- JS renders video cards here from the fake DB -->
+      </div>
+    </div>
+
+
+    <!-- ── PDF MATERIALS (Feature d) ──
+         In real life: SELECT * FROM PDF WHERE CourseID IN (enrolled courses)
+    -->
+    <div class="section" id="sec-pdfs">
+      <div class="page-title">📄 PDF Materials</div>
+      <div id="pdf-list">
+        <!-- JS renders PDF cards here from the fake DB -->
+      </div>
+    </div>
+
+
+    <!-- ── NOTICES (Feature e) ──
+         In real life: SELECT * FROM Notice ORDER BY PostedDate DESC
+    -->
+    <div class="section" id="sec-notices">
+      <div class="page-title">📢 Notices</div>
+      <div id="notice-list">
+        <!-- JS renders notice cards here from the fake DB -->
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /app -->
+
+
+<!-- VIDEO WATCH MODAL
+     In real life: replace placeholder with <video src="..."> or YouTube iframe
+-->
+<div class="modal-bg" id="video-modal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal('video-modal')">✕</button>
+    <h3 id="vm-title">Video Title</h3>
+    <p  id="vm-meta">Teacher · Duration</p>
+    <div class="modal-placeholder">
+      <div style="font-size:2.5rem;">▶️</div>
+      <div style="font-size:.82rem; color:var(--gray); margin-top:6px;">
+        Connect video URL from database here<br>
+        (use &lt;video&gt; tag or YouTube iframe)
+      </div>
+    </div>
+    <button class="btn-watch" style="width:100%; padding:10px;" onclick="closeModal('video-modal')">Close</button>
+  </div>
+</div>
+
+
+<!-- PDF DOWNLOAD MODAL -->
+<div class="modal-bg" id="pdf-modal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal('pdf-modal')">✕</button>
+    <h3>⬇ Download PDF</h3>
+    <p id="pdf-filename">filename.pdf</p>
+    <div class="modal-placeholder" style="background:#eaf0fd;">
+      <div style="font-size:2.5rem;">📄</div>
+      <div style="font-size:.82rem; color:var(--blue); margin-top:6px;">
+        File path comes from PDF table in database.<br>
+        Use fetch() to stream file to browser.
+      </div>
+    </div>
+    <button class="btn-dl" style="width:100%; padding:10px;" onclick="closeModal('pdf-modal')">Done</button>
+  </div>
+</div>
+
+
+<script>
+  /* ══════════════════════════════════════════════════════
+     FAKE BACKEND (simulates a real database)
+     ══════════════════════════════════════════════════════
+     In a real project:
+       - This data lives in MySQL tables (Student, Video, PDF, Notice)
+       - The frontend calls a PHP/Node.js API to get this data
+       - Example: fetch('/api/videos') → returns JSON like this array
+     For this demo, we store the data directly in JS.
+  */
+
+  /* STUDENT TABLE (in real DB: StudentID, Name, Password stored as hash) */
+  const students = [
+    { id: 'STU001', password: 'pass123', name: 'Rahat Karim' },
+    { id: 'STU002', password: 'abc456',  name: 'Nadia Islam'  }
+  ];
+
+  /* VIDEO TABLE (in real DB: VideoID, Title, Teacher, Duration, Course, URL) */
+  const videos = [
+    { id: 1, title: 'Normalization – 3NF & BCNF',     teacher: 'Dr. Salma', duration: '52 min', course: 'DBMS',     color: '#7d2a2a' },
+    { id: 2, title: 'ER Diagram to Relational Schema', teacher: 'Dr. Salma', duration: '48 min', course: 'DBMS',     color: '#7d2a2a' },
+    { id: 3, title: 'TCP/IP Model in Detail',          teacher: 'Mr. Rafi',  duration: '55 min', course: 'Networks', color: '#2d57a8' },
+    { id: 4, title: 'UML Class Diagrams',              teacher: 'Ms. Tania', duration: '50 min', course: 'SWE',      color: '#2e7d52' },
+    { id: 5, title: 'Process Scheduling Algorithms',   teacher: 'Dr. Hasan', duration: '58 min', course: 'OS',       color: '#4a1a6a' }
+  ];
+
+  /* PDF TABLE (in real DB: PDFID, FileName, Teacher, Course, FileSize, FilePath) */
+  const pdfs = [
+    { id: 1, name: 'DBMS Normalization – Chapter 4',    teacher: 'Dr. Salma', course: 'DBMS',     size: '2.4 MB' },
+    { id: 2, name: 'SQL Query Reference Sheet',          teacher: 'Dr. Salma', course: 'DBMS',     size: '0.8 MB' },
+    { id: 3, name: 'TCP/IP Protocol Slides',             teacher: 'Mr. Rafi',  course: 'Networks', size: '3.2 MB' },
+    { id: 4, name: 'UML Diagram Types – Reference',      teacher: 'Ms. Tania', course: 'SWE',      size: '1.9 MB' },
+    { id: 5, name: 'Process Scheduling – Lecture Notes', teacher: 'Dr. Hasan', course: 'OS',       size: '1.5 MB' }
+  ];
+
+  /* NOTICE TABLE (in real DB: NoticeID, Title, Body, Type, PostedBy, Date) */
+  const notices = [
+    { id: 1, title: 'Final Exam Schedule Released',        body: 'Final exams begin May 10. Collect admit cards by May 5 from the exam office.',                type: 'urgent',  by: 'Exam Committee', date: 'Apr 17' },
+    { id: 2, title: 'SWE Class Rescheduled to Lab-2',      body: 'April 19 SWE class moved to Lab-2 at 11 AM. Bring laptops.',                                  type: 'info',    by: 'Ms. Tania',      date: 'Apr 16' },
+    { id: 3, title: 'DBMS Project Deadline Extended',       body: 'Project submission (EER + Schema) extended to April 28. Late = -10 marks.',                   type: 'general', by: 'Dr. Salma',      date: 'Apr 15' },
+    { id: 4, title: 'Library Closed Apr 21–22',             body: 'Library closed for Eid preparation. Digital resources still available on portal.',             type: 'general', by: 'Admin',          date: 'Apr 14' }
+  ];
+
+  /* ── CURRENT LOGGED-IN STUDENT: stored here after login ── */
+  let currentStudent = null;
+
+  /* ══════════════════════════════════════════════════════
+     LOGIN (Feature a)
+     Checks student ID + password against the students array.
+     In real life: POST /api/login → server queries Student table
+  */
+  function doLogin() {
+    const id = document.getElementById('sid').value.trim();
+    const pw = document.getElementById('spw').value.trim();
+    const err = document.getElementById('login-error');
+
+    /* Find matching student from our fake DB */
+    const found = students.find(s => s.id === id && s.password === pw);
+
+    if (!found) {
+      err.style.display = 'block'; /* show error message */
+      return;
+    }
+
+    err.style.display = 'none';
+    currentStudent = found;
+
+    /* Show app, hide login */
+    document.getElementById('login-page').style.display = 'none';
+    document.getElementById('app').style.display = 'flex';
+
+    /* Put student name in topbar */
+    document.getElementById('student-name').textContent = '👤 ' + found.name;
+
+    /* Fill all sections with data */
+    loadDashboard();
+    loadVideos();
+    loadPDFs();
+    loadNotices();
+  }
+
+  /* ── LOGOUT: hide app, show login, reset everything ── */
+  function doLogout() {
+    currentStudent = null;
+    document.getElementById('app').style.display = 'none';
+    document.getElementById('login-page').style.display = 'flex';
+    document.getElementById('sid').value = '';
+    document.getElementById('spw').value = '';
+  }
+
+  /* ══════════════════════════════════════════════════════
+     TAB SWITCHING
+     Hides all sections, shows only the clicked one.
+     This is a Single Page App (SPA) — no page reload needed.
+  */
+  function showTab(id, btn) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('sec-' + id).classList.add('active');
+    btn.classList.add('active');
+  }
+
+  /* ══════════════════════════════════════════════════════
+     LOAD DASHBOARD
+     Shows count of videos, pdfs, notices + latest notice preview
+  */
+  function loadDashboard() {
+    document.getElementById('d-videos').textContent  = videos.length;
+    document.getElementById('d-pdfs').textContent    = pdfs.length;
+    document.getElementById('d-notices').textContent = notices.length;
+
+    /* Show the first (most urgent) notice as a preview */
+    const n = notices[0];
+    document.getElementById('d-latest-notice').innerHTML = `
+      <span class="tag ${n.type}">${n.type.toUpperCase()}</span>
+      <strong>${n.title}</strong>
+      <p style="margin-top:8px; font-size:.85rem;">${n.body}</p>
+      <div class="notice-meta">📅 ${n.date} · ${n.by}</div>
+    `;
+  }
+
+  /* ══════════════════════════════════════════════════════
+     LOAD VIDEOS (Feature c: Watch Recorded Classes)
+     Loops through videos array and builds HTML cards.
+     In real life: fetch('/api/videos') → JSON → same loop
+  */
+  function loadVideos() {
+    const list = document.getElementById('video-list');
+    list.innerHTML = videos.map(v => `
+      <div class="card">
+        <div class="video-row">
+          <!-- Colored thumbnail square representing the course -->
+          <div class="thumb" style="background:${v.color};">🎬</div>
+          <div class="v-info">
+            <h3>${v.title}</h3>
+            <p>📚 ${v.course} &nbsp;·&nbsp; 👩‍🏫 ${v.teacher} &nbsp;·&nbsp; ⏱ ${v.duration}</p>
+          </div>
+          <!-- Clicking Watch opens the modal with this video's info -->
+          <button class="btn-watch" onclick="openVideo('${v.title}','${v.teacher}','${v.duration}')">▶ Watch</button>
+        </div>
+      </div>
+    `).join('');   /* join('') combines array into one HTML string */
+  }
+
+  /* ══════════════════════════════════════════════════════
+     LOAD PDFs (Feature d: Download PDFs)
+  */
+  function loadPDFs() {
+    const list = document.getElementById('pdf-list');
+    list.innerHTML = pdfs.map(p => `
+      <div class="card">
+        <div class="pdf-row">
+          <div class="pdf-icon">📄</div>
+          <div style="flex:1;">
+            <h3 style="font-size:.9rem;">${p.name}</h3>
+            <p style="font-size:.75rem; color:var(--gray);">📚 ${p.course} &nbsp;·&nbsp; 👩‍🏫 ${p.teacher} &nbsp;·&nbsp; 💾 ${p.size}</p>
+          </div>
+          <button class="btn-dl" onclick="openPDF('${p.name}.pdf')">⬇ Download</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  /* ══════════════════════════════════════════════════════
+     LOAD NOTICES (Feature e: Read Notices)
+  */
+  function loadNotices() {
+    const list = document.getElementById('notice-list');
+    list.innerHTML = notices.map(n => `
+      <div class="card notice-card ${n.type}">
+        <span class="tag ${n.type}">${n.type.toUpperCase()}</span>
+        <h3>${n.title}</h3>
+        <p>${n.body}</p>
+        <div class="notice-meta">📅 ${n.date} &nbsp;·&nbsp; Posted by: ${n.by}</div>
+      </div>
+    `).join('');
+  }
+
+  /* ══════════════════════════════════════════════════════
+     MODAL HELPERS
+     openVideo / openPDF → fill modal content + show it
+     closeModal → hide the modal
+     Clicking outside the modal box also closes it (see event listener below)
+  */
+  function openVideo(title, teacher, duration) {
+    document.getElementById('vm-title').textContent = title;
+    document.getElementById('vm-meta').textContent  = teacher + ' · ' + duration;
+    document.getElementById('video-modal').classList.add('open');
+  }
+
+  function openPDF(filename) {
+    document.getElementById('pdf-filename').textContent = '📄 ' + filename;
+    document.getElementById('pdf-modal').classList.add('open');
+  }
+
+  function closeModal(id) {
+    document.getElementById(id).classList.remove('open');
+  }
+
+  /* Close modal if user clicks on the dark background (outside the box) */
+  document.querySelectorAll('.modal-bg').forEach(m => {
+    m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
+  });
+</script>
+</body>
+</html>
